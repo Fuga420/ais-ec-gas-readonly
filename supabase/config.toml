@@ -1,0 +1,15 @@
+# Supabase CLI configuration for B.I.S EC Product Master DB
+# Managed in Fuga420/ais-ec-gas (protected from Readdy frontend exports)
+project_id = "bis-ec-products"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 17
+

@@ -1,0 +1,40 @@
+flowchart TD
+    Start["画像・商品メタデータ入力"] --> PriorClass["先行カテゴリー判定 (classifyCategoryPriorFromImages_)"]
+    
+    PriorClass --> CheckPrior{"カテゴリー判定結果"}
+    CheckPrior -->|"不一致検知 (category_mismatch)"| StageAGeneric["汎用客観検査 Stage A (推測遮断)"]
+    CheckPrior -->|"ポケカ確定"| StageAPoke["ポケカ専用 Stage A (直接視認 + 検索)"]
+    CheckPrior -->|"スニーカー確定"| StageASneaker["スニーカー専用 Stage A (箱ラベル/タグ確認 + 検索)"]
+    CheckPrior -->|"形式エラー / 未確定"| StageAGeneric
+    
+    StageAPoke --> ParseA["柔軟抽出パーサー (parseStageASections_)"]
+    StageASneaker --> ParseA
+    StageAGeneric --> ParseA
+    
+    ParseA --> StageB["Stage B: 構造化ドラフト生成 (直接視認値バインド)"]
+    StageB --> CategoryRescue{"先行分類未確定かつ<br/>後段で特定成功?"}
+    CategoryRescue -->|"はい"| RescueCat["カテゴリ確定 (needs_reviewからcategory除外)"]
+    CategoryRescue -->|"いいえ"| KeepCat["既存カテゴリ状態維持"]
+    
+    RescueCat --> SkuRescue{"スニーカー箱ラベル未撮影かつ<br/>検索で型番確認?"}
+    KeepCat --> SkuRescue
+    
+    SkuRescue -->|"はい"| SetSkuCand["型番候補提示 (sku_source: search_corroborated)<br/>出典注記追記 + needs_review: sku"]
+    SkuRescue -->|"いいえ / 箱ラベル直読"| SetDirectSku["直読SKU採用 (sku_source: box_label)"]
+    
+    SetSkuCand --> PriceCheck{"価格根拠検査 (calculateServerGroundedPrice_)"}
+    SetDirectSku --> PriceCheck
+    
+    PriceCheck -->|"同一モデル比較可能 (comparable_model)"| CompPrice["参考価格案算出 (price_basis: comparable_model_reference)<br/>needs_review_price: true (自動確定遮断)"]
+    PriceCheck -->|"厳格成約一致 (exact_match)"| ExactPrice["成約中央値/平均値算出"]
+    PriceCheck -->|"根拠なし"| NoPrice["価格 null (空欄)"]
+    
+    CompPrice --> SanitizeCond{"ポケカかつ裏面画像未撮影?"}
+    ExactPrice --> SanitizeCond
+    NoPrice --> SanitizeCond
+    
+    SanitizeCond -->|"はい"| BlankCond["状態欄 condition: '' (空欄化)<br/>needs_review: condition, card_condition"]
+    SanitizeCond -->|"いいえ"| NormalCond["状態保持"]
+    
+    BlankCond --> FinalDraft["AIドラフト生成完了 (product_ai_drafts 保存)"]
+    NormalCond --> FinalDraft

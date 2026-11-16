@@ -1,0 +1,7 @@
+flowchart LR
+    A["TMP-000113 (表面1枚)"] --> B["先行分類: pokemon_card (high)"]
+    B --> C["ポケカ専用 Stage A: ミュウex / M6a / 129/103 / SAR 視認"]
+    C --> D["柔軟パーサー: card_name='ミュウex', card_number='129/103', set_code='M6a', rarity='SAR' 抽出"]
+    D --> E["Stage B: ミュウex [M6a 129/103] 30th CELEBRATION 生成"]
+    E --> F["裏面未撮影サニタイズ: condition='', needs_review=['condition', 'card_condition']"]
+    F --> G["成約取引検索: 直近取引参照案 (price: 算出値, price_basis: recent_transaction_reference)"]

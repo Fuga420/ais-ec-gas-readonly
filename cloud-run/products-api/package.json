@@ -1,0 +1,18 @@
+{
+  "name": "bis-ec-products-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "B.I.S EC Cloud Run Product List, Search & Detail API backed by Supabase",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/server.mjs",
+    "test": "node --test test/productsApi.test.mjs test/productsWrite.test.mjs test/aiDraftService.test.mjs test/aiBatchService.test.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1"
+  }
+}
+

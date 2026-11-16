@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIドラフト推論パイプライン・検証設計・想定経路図</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --secondary: #0f172a;
+      --secondary-hover: #334155;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text-main);
+      margin: 0;
+      padding: 40px 20px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 40px;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 26px;
+      margin-bottom: 8px;
+      color: var(--secondary);
+    }
+
+    p.lead {
+      color: var(--text-muted);
+      font-size: 15px;
+      margin-top: 0;
+    }
+
+    .diagram-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 36px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--secondary);
+      margin: 0;
+    }
+
+    .card-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin: 4px 0 0 0;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    button.btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    button.btn:hover {
+      background-color: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+
+    button.btn-primary {
+      background-color: var(--primary);
+      border-color: var(--primary);
+      color: #ffffff;
+    }
+
+    button.btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .mermaid-wrapper {
+      overflow-x: auto;
+      display: flex;
+      justify-content: center;
+      padding: 20px 0;
+      min-height: 200px;
+    }
+
+    .mermaid-wrapper svg {
+      max-width: 100%;
+      height: auto;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>AIドラフト推論パイプライン・検証設計・想定経路図</h1>
+    <p class="lead">各図の「SVG保存」「PNG保存」ボタンから、ダイアグラムを画像ファイルとして直接PCにダウンロードできます。</p>
+  </header>
+
+  <!-- Diagram 1 -->
+  <div class="diagram-card" id="card-pipeline">
+    <div class="card-header">
+      <div>
+        <h2 class="card-title">1. 推論パイプライン全体フロー</h2>
+        <p class="card-desc">先行分類からStage A/B、カテゴリ救済、型番提示、参考価格案、裏面未撮影サニタイズに至る全分岐</p>
+      </div>
+      <div class="actions">
+        <button class="btn" onclick="downloadSvg('pipeline', '01_overall_inference_pipeline.svg')">
+          📥 SVG保存
+        </button>
+        <button class="btn btn-primary" onclick="downloadPng('pipeline', '01_overall_inference_pipeline.png')">
+          📥 PNG保存
+        </button>
+      </div>
+    </div>
+    <div class="mermaid-wrapper" id="wrapper-pipeline">
+      <div class="mermaid" id="diagram-pipeline">
+flowchart TD
+    Start["画像・商品メタデータ入力"] --> PriorClass["先行カテゴリー判定 (classifyCategoryPriorFromImages_)"]
+    
+    PriorClass --> CheckPrior{"カテゴリー判定結果"}
+    CheckPrior -->|"不一致検知 (category_mismatch)"| StageAGeneric["汎用客観検査 Stage A (推測遮断)"]
+    CheckPrior -->|"ポケカ確定"| StageAPoke["ポケカ専用 Stage A (直接視認 + 検索)"]
+    CheckPrior -->|"スニーカー確定"| StageASneaker["スニーカー専用 Stage A (箱ラベル/タグ確認 + 検索)"]
+    CheckPrior -->|"形式エラー / 未確定"| StageAGeneric
+    
+    StageAPoke --> ParseA["柔軟抽出パーサー (parseStageASections_)"]
+    StageASneaker --> ParseA
+    StageAGeneric --> ParseA
+    
+    ParseA --> StageB["Stage B: 構造化ドラフト生成 (直接視認値バインド)"]
+    StageB --> CategoryRescue{"先行分類未確定かつ<br/>後段で特定成功?"}
+    CategoryRescue -->|"はい"| RescueCat["カテゴリ確定 (needs_reviewからcategory除外)"]
+    CategoryRescue -->|"いいえ"| KeepCat["既存カテゴリ状態維持"]
+    
+    RescueCat --> SkuRescue{"スニーカー箱ラベル未撮影かつ<br/>検索で型番確認?"}
+    KeepCat --> SkuRescue
+    
+    SkuRescue -->|"はい"| SetSkuCand["型番候補提示 (sku_source: search_corroborated)<br/>出典注記追記 + needs_review: sku"]
+    SkuRescue -->|"いいえ / 箱ラベル直読"| SetDirectSku["直読SKU採用 (sku_source: box_label)"]
+    
+    SetSkuCand --> PriceCheck{"価格根拠検査 (calculateServerGroundedPrice_)"}
+    SetDirectSku --> PriceCheck
+    
+    PriceCheck -->|"同一モデル比較可能 (comparable_model)"| CompPrice["参考価格案算出 (price_basis: comparable_model_reference)<br/>needs_review_price: true (自動確定遮断)"]
+    PriceCheck -->|"厳格成約一致 (exact_match)"| ExactPrice["成約中央値/平均値算出"]
+    PriceCheck -->|"根拠なし"| NoPrice["価格 null (空欄)"]
+    
+    CompPrice --> SanitizeCond{"ポケカかつ裏面画像未撮影?"}
+    ExactPrice --> SanitizeCond
+    NoPrice --> SanitizeCond
+    
+    SanitizeCond -->|"はい"| BlankCond["状態欄 condition: '' (空欄化)<br/>needs_review: condition, card_condition"]
+    SanitizeCond -->|"いいえ"| NormalCond["状態保持"]
+    
+    BlankCond --> FinalDraft["AIドラフト生成完了 (product_ai_drafts 保存)"]
+    NormalCond --> FinalDraft
+      </div>
+    </div>
+  </div>
+
+  <!-- Diagram 2 -->
+  <div class="diagram-card" id="card-tmp113">
+    <div class="card-header">
+      <div>
+        <h2 class="card-title">2. TMP-000113 検証設計・想定通過経路（ポケカ表面1枚）</h2>
+        <p class="card-desc">ミュウex [M6a 129/103] SAR 視認・裏面未撮影サニタイズ・成約取引参照案（※実測ログ取得待ち）</p>
+      </div>
+      <div class="actions">
+        <button class="btn" onclick="downloadSvg('tmp113', '02_tmp_000113_pokemon_card_flow.svg')">
+          📥 SVG保存
+        </button>
+        <button class="btn btn-primary" onclick="downloadPng('tmp113', '02_tmp_000113_pokemon_card_flow.png')">
+          📥 PNG保存
+        </button>
+      </div>
+    </div>
+    <div class="mermaid-wrapper" id="wrapper-tmp113">
+      <div class="mermaid" id="diagram-tmp113">
+flowchart LR
+    A["TMP-000113 (表面1枚)"] --> B["先行分類: pokemon_card (high)"]
+    B --> C["ポケカ専用 Stage A: ミュウex / M6a / 129/103 / SAR 視認"]
+    C --> D["柔軟パーサー: card_name='ミュウex', card_number='129/103', set_code='M6a', rarity='SAR' 抽出"]
+    D --> E["Stage B: ミュウex [M6a 129/103] 30th CELEBRATION 生成"]
+    E --> F["裏面未撮影サニタイズ: condition='', needs_review=['condition', 'card_condition']"]
+    F --> G["成約取引検索: 直近取引参照案 (price: 算出値, price_basis: recent_transaction_reference)"]
+      </div>
+    </div>
+  </div>
+
+  <!-- Diagram 3 -->
+  <div class="diagram-card" id="card-tmp114">
+    <div class="card-header">
+      <div>
+        <h2 class="card-title">3. TMP-000114 検証設計・想定通過経路（スニーカー外観1枚）</h2>
+        <p class="card-desc">先行分類パースエラー救済・Kobe V Protro “Year of the Mamba” Eggplant 型番 IB4481-500 候補提示・同一モデル参考価格案（※実測ログ取得待ち）</p>
+      </div>
+      <div class="actions">
+        <button class="btn" onclick="downloadSvg('tmp114', '03_tmp_000114_sneaker_flow.svg')">
+          📥 SVG保存
+        </button>
+        <button class="btn btn-primary" onclick="downloadPng('tmp114', '03_tmp_000114_sneaker_flow.png')">
+          📥 PNG保存
+        </button>
+      </div>
+    </div>
+    <div class="mermaid-wrapper" id="wrapper-tmp114">
+      <div class="mermaid" id="diagram-tmp114">
+flowchart LR
+    A["TMP-000114 (シューズ外観1枚)"] --> B["先行分類: 形式エラーで未確定 (category='')"]
+    B --> C["汎用客観検査 Stage A: Nike Kobe 外観特定、検索で型番 IB4481-500 確認"]
+    C --> D["柔軟パーサー: box_label_sku=NONE, style_code='IB4481-500' 抽出"]
+    D --> E["Stage B: NIKE Kobe V Protro “Year of the Mamba” Eggplant 特定、後段カテゴリ救済 (category='sneaker')"]
+    E --> F["型番候補設定: sku='IB4481-500', sku_source='search_corroborated', 出典注記付与, needs_review=['sku']"]
+    F --> G["価格計算: サイズ未確認・同一モデル成約 (comparable_model) 参考価格案算出, needs_review_price=true"]
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>AIS-EC-GAS | AI Draft Inference Pipeline Documentation</p>
+  </footer>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'default',
+    flowchart: {
+      useMaxWidth: false,
+      htmlLabels: true,
+      curve: 'basis'
+    },
+    securityLevel: 'loose'
+  });
+
+  function getSvgElement(key) {
+    const wrapper = document.getElementById('wrapper-' + key);
+    return wrapper.querySelector('svg');
+  }
+
+  function downloadSvg(key, filename) {
+    const svg = getSvgElement(key);
+    if (!svg) {
+      alert('ダイアグラムの描画中です。少し待ってから再度お試しください。');
+      return;
+    }
+    const serializer = new XMLSerializer();
+    let source = serializer.serializeToString(svg);
+    if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
+      source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+    }
+    const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  function downloadPng(key, filename) {
+    const svg = getSvgElement(key);
+    if (!svg) {
+      alert('ダイアグラムの描画中です。少し待ってから再度お試しください。');
+      return;
+    }
+
+    const serializer = new XMLSerializer();
+    let source = serializer.serializeToString(svg);
+    if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
+      source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+    }
+
+    const rect = svg.getBoundingClientRect();
+    const width = Math.max(rect.width * 2, 1200);
+    const height = Math.max(rect.height * 2, 600);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+
+    const img = new Image();
+    const svgBlob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+
+    img.onload = function() {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(img, 0, 0, width, height);
+      URL.revokeObjectURL(url);
+
+      canvas.toBlob(function(blob) {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }, 'image/png');
+    };
+    img.src = url;
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,40 @@
+# Node test scripts and temporary test files
+test_harness_standalone.js
+test_multi_product_import_standalone.js
+test_*.mjs
+*.mjs
+**/*.mjs
+scratch/**
+tests_local/**
+diff_*.patch
+*.patch
+*.zip
+*.xlsx
+*.md
+**/*.md
+AGENTS.md
+docs/**
+*.backup
+*backup*
+.*backup*/**
+.gas_head_backup/**
+migration_square_import.js
+gas_ai_batch_relay_package/**
+*relay*/**
+
+# Supabase, Cloud Run, migration scripts, node_modules, and env files
+supabase/**
+cloud-run/**
+scripts/**
+migrations/**
+node_modules/**
+**/node_modules/**
+.env
+.env.*
+.env*
+
+# Git and OS metadata
+.git/**
+.gitignore
+.DS_Store
+Thumbs.db

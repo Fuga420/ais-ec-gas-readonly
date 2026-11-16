@@ -1,0 +1,7 @@
+flowchart LR
+    A["TMP-000114 (シューズ外観1枚)"] --> B["先行分類: 形式エラーで未確定 (category='')"]
+    B --> C["汎用客観検査 Stage A: Nike Kobe 外観特定、検索で型番 IB4481-500 確認"]
+    C --> D["柔軟パーサー: box_label_sku=NONE, style_code='IB4481-500' 抽出"]
+    D --> E["Stage B: NIKE Kobe V Protro “Year of the Mamba” Eggplant 特定、後段カテゴリ救済 (category='sneaker')"]
+    E --> F["型番候補設定: sku='IB4481-500', sku_source='search_corroborated', 出典注記付与, needs_review=['sku']"]
+    F --> G["価格計算: サイズ未確認・同一モデル成約 (comparable_model) 参考価格案算出, needs_review_price=true"]

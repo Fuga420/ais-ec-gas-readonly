@@ -1,0 +1,29 @@
+# Temporary and backup files
+*.backup
+*backup*
+.*backup*/**
+.gas_head_backup/
+/diagnose_tmp100_standalone.js
+*.patch
+*.zip
+AI_DRAFT_SUBMISSION_PACKAGE.md
+migration_square_import.js
+gas_ai_batch_relay_package/
+
+# Environment and secret files (NEVER commit secrets)
+.env
+.env.*
+!.env.supabase.example
+
+# Supabase CLI temporary state
+supabase/.temp/
+supabase/.branches/
+
+# Node and logs
+node_modules/
+cloud-run/**/node_modules/
+*.log
+
+# OS metadata
+.DS_Store
+Thumbs.db
